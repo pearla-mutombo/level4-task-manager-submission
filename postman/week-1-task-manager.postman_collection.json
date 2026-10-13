@@ -1,0 +1,1515 @@
+{
+  "info": {
+    "_postman_id": "29547fd9-8f09-4cc2-adcc-cdfad5e1e7a9",
+    "name": "Level 4 — Week 1 Flask Task Manager",
+    "description": "Run the matching day folder against its backend. Later folders require later endpoints. Select the local environment first. Each full-workflow folder creates its own task and captures the ID. No authentication or secrets required.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Day 01 — First response",
+      "item": [
+        {
+          "name": "Health — first JSON response",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Greeting\", function () { pm.expect(pm.response.json().message).to.be.a(\"string\").and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Day 02 — Inputs, read and create",
+      "item": [
+        {
+          "name": "List all tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Array newest first\", function () { const tasks = pm.response.json(); pm.expect(tasks).to.be.an(\"array\"); for (let i = 1; i < tasks.length; i++) pm.expect(tasks[i-1].id).to.be.above(tasks[i].id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query — active tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks?status=active"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"All incomplete\", function () { pm.response.json().forEach(t => pm.expect(t.is_complete).to.eql(false)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query — completed tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks?status=completed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"All complete\", function () { pm.response.json().forEach(t => pm.expect(t.is_complete).to.eql(true)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create and capture actual ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"  Postman practice task  \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));",
+                  "pm.test(\"Trimmed and incomplete\", function () { const t = pm.response.json(); pm.expect(t.title).to.eql(\"Postman practice task\"); pm.expect(t.is_complete).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Route parameter — captured task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown query filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks?status=unknown"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Blank title",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong content type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "hello",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 415\", function () { pm.response.to.have.status(415); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Day 03 — CRUD and validation",
+      "item": [
+        {
+          "name": "Create independent Day 3 task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Atomic update practice\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change title and completion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated through Postman\",\n  \"is_complete\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject mixed valid title and invalid boolean",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Must not be stored\",\n  \"is_complete\": \"false\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read — original fields survived rejection",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Rejected request changed no fields\", function () {",
+                  "  pm.expect(task.title).to.eql(pm.environment.get(\"expected_title\"));",
+                  "  pm.expect(task.is_complete).to.eql(JSON.parse(pm.environment.get(\"expected_is_complete\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empty update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject immutable ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject immutable timestamp",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"created_at\": \"changed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Completion cannot be numeric",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_complete\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Title cannot be numeric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Title cannot exceed 80 characters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Malformed JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "JSON must be an object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "[]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete — no response body",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });",
+                  "pm.test(\"Empty response\", function () { pm.expect(pm.response.text()).to.eql(\"\"); });",
+                  "pm.environment.set(\"previous_deleted_id\", pm.environment.get(\"task_id\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deleted task is missing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create without reusing deleted ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Counter continues\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"New ID advances\", function () { pm.expect(pm.response.json().id).to.be.above(Number(pm.environment.get(\"previous_deleted_id\"))); });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Day 04 — Modular API regression",
+      "item": [
+        {
+          "name": "Health — Day 4",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a new verification task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Day 4 verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read created task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Rejected request changed no fields\", function () {",
+                  "  pm.expect(task.title).to.eql(pm.environment.get(\"expected_title\"));",
+                  "  pm.expect(task.is_complete).to.eql(JSON.parse(pm.environment.get(\"expected_is_complete\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark complete",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_complete\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query completed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks?status=completed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Completed filter\", function () { pm.response.json().forEach(t => pm.expect(t.is_complete).to.eql(true)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject invalid boolean",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"No partial write\",\n  \"is_complete\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm unchanged after rejection",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Rejected request changed no fields\", function () {",
+                  "  pm.expect(task.title).to.eql(pm.environment.get(\"expected_title\"));",
+                  "  pm.expect(task.is_complete).to.eql(JSON.parse(pm.environment.get(\"expected_is_complete\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete verification task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });",
+                  "pm.test(\"Empty response\", function () { pm.expect(pm.response.text()).to.eql(\"\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deleted verification task missing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Day 05 — Final API verification",
+      "item": [
+        {
+          "name": "Health — Day 5",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a new verification task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Day 5 verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read created task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Rejected request changed no fields\", function () {",
+                  "  pm.expect(task.title).to.eql(pm.environment.get(\"expected_title\"));",
+                  "  pm.expect(task.is_complete).to.eql(JSON.parse(pm.environment.get(\"expected_is_complete\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark complete",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_complete\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Server task fields\", function () {",
+                  "  pm.expect(task.id).to.be.a(\"number\");",
+                  "  pm.expect(task.title).to.be.a(\"string\");",
+                  "  pm.expect(task.is_complete).to.be.a(\"boolean\");",
+                  "  pm.expect(task.created_at).to.be.a(\"string\");",
+                  "});",
+                  "pm.environment.set(\"task_id\", task.id);",
+                  "pm.environment.set(\"expected_title\", task.title);",
+                  "pm.environment.set(\"expected_is_complete\", JSON.stringify(task.is_complete));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query completed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks?status=completed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Completed filter\", function () { pm.response.json().forEach(t => pm.expect(t.is_complete).to.eql(true)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject invalid boolean",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"No partial write\",\n  \"is_complete\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm unchanged after rejection",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "const task = pm.response.json();",
+                  "pm.test(\"Rejected request changed no fields\", function () {",
+                  "  pm.expect(task.title).to.eql(pm.environment.get(\"expected_title\"));",
+                  "  pm.expect(task.is_complete).to.eql(JSON.parse(pm.environment.get(\"expected_is_complete\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete verification task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });",
+                  "pm.test(\"Empty response\", function () { pm.expect(pm.response.text()).to.eql(\"\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deleted verification task missing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tasks/{{task_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"JSON response\", function () { pm.response.to.be.json; });",
+                  "pm.test(\"Readable error\", function () { pm.expect(pm.response.json().error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

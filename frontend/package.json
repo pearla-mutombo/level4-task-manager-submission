@@ -1,0 +1,51 @@
+{
+  "name": "level4-week1-task-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "dev": "vite --mode day-05",
+    "dev:day-01": "vite --mode day-01",
+    "dev:day-02": "vite --mode day-02",
+    "dev:day-03": "vite --mode day-03",
+    "dev:day-04": "vite --mode day-04",
+    "dev:day-05": "vite --mode day-05",
+    "build": "vite build --mode day-05",
+    "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
+    "lint:js": "eslint src vite.config.js eslint.config.js",
+    "lint:styles": "stylelint \"src/**/*.scss\"",
+    "lint:html": "htmlhint index.html",
+    "lint": "npm run lint:js && npm run lint:styles && npm run lint:html",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "axios": "1.20.0",
+    "bootstrap": "5.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.3",
+    "sass": "1.95.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@vitejs/plugin-react": "5.1.2",
+    "eslint": "9.39.1",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-refresh": "0.4.24",
+    "globals": "16.5.0",
+    "htmlhint": "1.8.0",
+    "jsdom": "29.1.1",
+    "stylelint": "16.26.1",
+    "stylelint-config-recommended-scss": "16.0.2",
+    "stylelint-config-standard": "39.0.1",
+    "stylelint-scss": "6.13.0",
+    "vite": "7.3.6",
+    "vitest": "5.0.1"
+  }
+}

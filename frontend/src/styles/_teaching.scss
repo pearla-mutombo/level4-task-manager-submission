@@ -1,0 +1,51 @@
+@use "./variables" as *;
+
+.connection-card {
+  width: min(100%, 620px);
+  margin-bottom: $space-xl;
+  padding: $space-xl;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-lg;
+  background-color: $color-surface;
+
+  &__message {
+    color: $color-success;
+    font-size: 1.2rem;
+    font-weight: 650;
+  }
+
+  code {
+    display: block;
+    margin-top: $space-lg;
+    overflow-wrap: anywhere;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+
+  button {
+    margin-top: $space-md;
+  }
+}
+
+.lesson-notice {
+  margin: 0 0 $space-lg;
+  padding: $space-md;
+  border-left: 3px solid $color-accent;
+  background-color: $color-accent-soft;
+  color: $color-text-main;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.task-details__title {
+  overflow-wrap: anywhere;
+}
+
+.task-details__date {
+  margin-bottom: $space-xl;
+  color: $color-text-muted;
+}
+
+.task-details-actions {
+  margin-top: $space-lg;
+}

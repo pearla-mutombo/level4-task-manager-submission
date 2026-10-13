@@ -1,0 +1,14 @@
+[
+  {"method":"POST","path":"/api/tasks","body":{"title":"   "},"expected_status":400},
+  {"method":"POST","path":"/api/tasks","body":{"title":12},"expected_status":400},
+  {"method":"POST","path":"/api/tasks","body":{"title":"Learn","id":99},"expected_status":400},
+  {"method":"POST","path":"/api/tasks","body":[],"expected_status":400},
+  {"method":"POST","path":"/api/tasks","content_type":"text/plain","raw_body":"hello","expected_status":415},
+  {"method":"POST","path":"/api/tasks","content_type":"application/json","raw_body":"{","expected_status":400},
+  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{},"expected_status":400},
+  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"title":"Changed","is_complete":"false"},"expected_status":400,"follow_up":"GET the same task and confirm the original title and completion are unchanged."},
+  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"is_complete":0},"expected_status":400},
+  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"created_at":"changed"},"expected_status":400},
+  {"method":"GET","path":"/api/tasks/999999","expected_status":404},
+  {"method":"GET","path":"/api/tasks?status=unknown","expected_status":400}
+]
