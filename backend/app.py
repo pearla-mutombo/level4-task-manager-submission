@@ -139,6 +139,47 @@ def create_task():
   next_id += 1
   return jsonify(task), 201
 
+# PATCH /tasks/:id
+# This endpoint will partially update an existing task
+@app.patch("/api/tasks/<int:task_id>")
+def edit_task(task_id):
+  task = find_task(task_id)
+  if task is None:
+    return jsonify({"error": "Task not found."}), 404
+
+  data, error, status = read_json_object()
+  if error is not None:
+    return jsonify({"error": error}), status
+
+  if not data:
+    return jsonify({"error": "Provide title and/or is_complete."}), 400
+  if set(data) - {"title", "is_complete"}:
+    return jsonify({"error": "Only title and is_complete can be updated."}), 400
+
+  changes = {}
+  if "title" in data:
+    title, error = validate_title(data["title"])
+    if error is not None:
+        return jsonify({"error": error}), 400
+    changes["title"] = title
+
+  if "is_complete" in data:
+      if not isinstance(data["is_complete"], bool):
+          return jsonify({"error": "is_complete must be a boolean."}), 400
+      changes["is_complete"] = data["is_complete"]
+
+  # No stored value changes until every supplied field has passed validation.
+  task.update(changes)
+  return jsonify(task)
+
+@app.delete("/api/tasks/<int:task_id>")
+def remove_task(task_id):
+  task = find_task(task_id)
+  if task is None:
+      return jsonify({"error": "Task not found."}), 404
+  tasks.remove(task)
+  return "", 204
+
 @app.errorhandler(404)
 def route_not_found(error):
     return jsonify({"error": "Route not found."}), 404
