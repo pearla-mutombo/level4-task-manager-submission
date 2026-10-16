@@ -26,3 +26,12 @@ def health():
 @app.get("/api/me")
 def me():
   return jsonify({"name": "Ulises", "favorite_color": "green"})
+
+# Day 1 Exercise: Return information about our backend
+@app.get("/api/about")
+def about():
+  return jsonify({
+    "language": "Python",
+    "framework": "Flask",
+    "storage": "In-memory"
+  })
