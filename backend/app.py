@@ -187,3 +187,12 @@ def route_not_found(error):
 @app.errorhandler(405)
 def method_not_allowed(error):
     return jsonify({"error": "HTTP method not allowed for this route."}), 405
+
+# Day 1 Exercise: Return information about our backend
+@app.get("/api/about")
+def about():
+    return jsonify({
+        "language": "Python",
+        "framework": "Flask",
+        "storage": "In-memory"
+    })
