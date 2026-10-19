@@ -30,3 +30,45 @@ Record one example for each method, including success status, failure status, bo
 Submit implementation changes, the completed request matrix, and your notes. The main checklist is full CRUD, useful errors, actual boolean validation, and unchanged data after a rejected update.
 
 **Optional:** Add additional tests after Thursday introduces pytest; prioritize the required manual cases today.
+
+---
+
+## My Day 3 Reflection: Challenges, Solutions, and What I Learned
+
+### What I Worked On
+
+For Day 3, I continued developing the Task Manager application by working with CRUD operations: Create, Read, Update, and Delete.
+
+I practiced creating tasks, retrieving task information, updating titles and completion statuses, and deleting tasks through the Flask API.
+
+I also worked on a separate Python exercise that helped me understand how to summarize task information using functions, lists, and dictionaries.
+
+### Challenges I Experienced
+
+One of the more challenging areas for me was understanding how the different CRUD operations work together and how Flask handles each request.
+
+I also needed to understand the difference between valid and invalid request data, especially when updating a task's completion status.
+
+For example, I learned that `"false"` in quotation marks is a string, while `false` without quotation marks is a Boolean value in JSON.
+
+Another important concept was understanding why an invalid update should not change any part of an existing task.
+
+### How I Worked Through These Challenges
+
+I reviewed each CRUD operation separately and practiced understanding what information the request sends to Flask and what response the backend returns.
+
+I also reviewed how task IDs are used to find specific records and why the backend should generate those IDs instead of relying on the number of tasks in a list.
+
+For validation, I studied how Python checks the information received in a request before updating the stored task.
+
+I also worked through the task summary exercise to practice using functions and organizing information from Python lists and dictionaries.
+
+### What I Learned
+
+Day 3 helped me better understand how a frontend and backend work together to manage information.
+
+I learned that CRUD operations are the foundation of many applications because they allow users to create, view, modify, and remove information.
+
+I also learned why validation and error handling are important. A backend should reject invalid information and protect existing data from unintended changes.
+
+One of my biggest takeaways was understanding that a successful application needs to handle both valid requests and situations where something goes wrong.

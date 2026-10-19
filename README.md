@@ -109,7 +109,7 @@ python -m flask --app app run --debug --host 127.0.0.1 --port 5001
 Success: Flask reports `Running on http://127.0.0.1:5001`. Keep this terminal running. Open [the health endpoint](http://127.0.0.1:5001/api/health) or send a Postman GET request. The default response is status **200** with:
 
 ```json
-{"status": "ok", "message": "Hello from Flask"}
+{ "status": "ok", "message": "Hello from Flask" }
 ```
 
 ### Terminal B — matching frontend lesson mode
@@ -121,13 +121,13 @@ npm run dev:day-01
 
 Open **http://127.0.0.1:5173**. The home page should display the real Flask greeting.
 
-| Day | Frontend command | Backend milestone |
-|---|---|---|
-| Mon, Oct 12 | `npm run dev:day-01` | First JSON route and React connection |
-| Tue, Oct 13 | `npm run dev:day-02` | List, details, create, and status query filtering |
-| Wed, Oct 14 | `npm run dev:day-03` | Update, completion changes, delete, and validation |
+| Day         | Frontend command     | Backend milestone                                      |
+| ----------- | -------------------- | ------------------------------------------------------ |
+| Mon, Oct 12 | `npm run dev:day-01` | First JSON route and React connection                  |
+| Tue, Oct 13 | `npm run dev:day-02` | List, details, create, and status query filtering      |
+| Wed, Oct 14 | `npm run dev:day-03` | Update, completion changes, delete, and validation     |
 | Thu, Oct 15 | `npm run dev:day-04` | Modules, configuration, application factory, and tests |
-| Fri, Oct 16 | `npm run dev:day-05` | Reliability checks and final demonstration |
+| Fri, Oct 16 | `npm run dev:day-05` | Reliability checks and final demonstration             |
 
 Later-day controls are unavailable with explanations until their lesson mode enables them. Stop Vite with **Control+C** before selecting another mode. `npm run dev` starts the full Day 5 interface, so use the explicit daily command during lessons.
 
@@ -143,14 +143,14 @@ React page → Axios API client → Flask route → Python memory → JSON respo
 
 React and Flask are separate processes. React sends requests to `http://127.0.0.1:5001/api`; Flask validates them and owns the task data. Tasks use `id`, `title`, `is_complete`, and `created_at`.
 
-| Endpoint | Introduced | Purpose |
-|---|---|---|
-| `GET /api/health` | Day 1 | Backend status and greeting |
-| `GET /api/tasks` | Day 2 | Tasks, newest first; optional `status=all`, `active`, or `completed` |
-| `GET /api/tasks/<task_id>` | Day 2 | One task by integer ID |
-| `POST /api/tasks` | Day 2 | Create an incomplete task from its title |
-| `PATCH /api/tasks/<task_id>` | Day 3 | Change title and/or completion |
-| `DELETE /api/tasks/<task_id>` | Day 3 | Delete a task; return 204 with no body |
+| Endpoint                      | Introduced | Purpose                                                              |
+| ----------------------------- | ---------- | -------------------------------------------------------------------- |
+| `GET /api/health`             | Day 1      | Backend status and greeting                                          |
+| `GET /api/tasks`              | Day 2      | Tasks, newest first; optional `status=all`, `active`, or `completed` |
+| `GET /api/tasks/<task_id>`    | Day 2      | One task by integer ID                                               |
+| `POST /api/tasks`             | Day 2      | Create an incomplete task from its title                             |
+| `PATCH /api/tasks/<task_id>`  | Day 3      | Change title and/or completion                                       |
+| `DELETE /api/tasks/<task_id>` | Day 3      | Delete a task; return 204 with no body                               |
 
 Titles are trimmed strings of 1–80 characters. Completion values must be JSON booleans. The backend assigns IDs and timestamps. Invalid input returns 400, missing records return 404, and unsupported request content types return 415. Follow the instructor's API contract as you implement these rules.
 
@@ -226,13 +226,61 @@ Backend tests use Flask's test client and do not require a running server. Also 
 
 Read the last useful application line in the Flask traceback and inspect the browser Network panel. Record the request URL, expected result, actual status/body, and what you tried before asking for help.
 
-| Symptom | First check |
-|---|---|
-| Flask cannot find the application | Has Day 1 added the application object to `backend/app.py`? Are you running from `backend/`? |
-| Browser reports a request error | Is Flask running on port 5001? Does the health endpoint work directly? |
-| Postman works but React cannot read the response | Check CORS allows exactly `http://127.0.0.1:5173`. |
-| Frontend will not start on port 5173 | Stop the previous Vite process. |
-| Task actions fail in an early lesson | Use the correct frontend mode and requests for the backend routes built so far. |
-| A previously captured Postman ID stops working | Restart the day's request workflow from creation after restarting Flask. |
+| Symptom                                          | First check                                                                                  |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Flask cannot find the application                | Has Day 1 added the application object to `backend/app.py`? Are you running from `backend/`? |
+| Browser reports a request error                  | Is Flask running on port 5001? Does the health endpoint work directly?                       |
+| Postman works but React cannot read the response | Check CORS allows exactly `http://127.0.0.1:5173`.                                           |
+| Frontend will not start on port 5173             | Stop the previous Vite process.                                                              |
+| Task actions fail in an early lesson             | Use the correct frontend mode and requests for the backend routes built so far.              |
+| A previously captured Postman ID stops working   | Restart the day's request workflow from creation after restarting Flask.                     |
 
 Additional setup details are in [the backend README](backend/README.md) and [the frontend README](frontend/README.md). The supplied frontend retains its [original MIT license](frontend/LICENSE).
+
+---
+
+## My Week 1 Project Completion Summary
+
+During Week 1, I developed and tested the Flask backend for this React Task Manager application. I completed Python practice exercises for Days 1 through 5 and documented the challenges I encountered, how I resolved them, and what I learned.
+
+### Work Completed
+
+- **Day 1:** Practiced Python values, lists, and dictionaries, and added the Flask `/api/about` endpoint.
+- **Day 2:** Practiced Python functions and worked with task-listing, task-detail, and task-creation API endpoints.
+- **Day 3:** Worked with CRUD operations, request validation, and a Python task-summary exercise.
+- **Day 4:** Practiced reading and writing JSON files, organized the Flask application, and added five automated backend tests.
+- **Day 5:** Created a standalone Python Reading List Report program that imports functions from another Python file, reads JSON data, and generates a text report.
+
+### Verification Results
+
+I ran the backend automated tests using:
+
+`python -m pytest -q`
+
+**Result: 5 tests passed.**
+
+I also ran my Day 5 Python program using:
+
+`python exercises/day-05/reading_report.py`
+
+The program successfully read the sample JSON file, counted two books, displayed their titles, and saved the results to `exercises/day-05/reading-report.txt`.
+
+### My Independent GitHub Repository
+
+My completed Week 1 work is submitted through my independent GitHub repository:
+
+https://github.com/pearla-mutombo/level4-task-manager-submission
+
+### Current Storage and Future Improvements
+
+The Task Manager currently stores tasks in Python memory. This means tasks remain available while the Flask application is running, but restarting Flask resets the task data.
+
+In Week 2, PostgreSQL could allow tasks to be saved permanently instead of being lost when the backend restarts. A database would also make it easier to organize task information and retrieve it efficiently. Adding authentication could allow individual users to manage their own tasks securely.
+
+### What I Learned Overall
+
+This project helped me understand how Python, Flask, React, and HTTP requests work together in a full-stack application.
+
+I also gained experience writing functions, organizing code, validating API requests, using Git and GitHub, resolving merge conflicts, and running automated tests.
+
+One of the most important lessons I learned was to read error messages carefully and verify that my code still works after making changes. I feel more confident approaching programming problems one step at a time.
