@@ -181,6 +181,16 @@ def create_app():
             "error": "HTTP method not allowed for this route."
         }), 405
 
+    # Day 1 endpoint: information about the backend.
+    @app.get("/api/about")
+    def about():
+        return jsonify({
+            "language": "Python",
+            "framework": "Flask",
+            "storage": "in-memory",
+        })
+
+    # Return the configured Flask application.
     return app
 
 
@@ -220,7 +230,5 @@ def validate_title(value):
         return None, "Title must contain between 1 and 80 characters."
 
     return title, None
-
-
 # Keep the existing Flask startup command working.
 app = create_app()
