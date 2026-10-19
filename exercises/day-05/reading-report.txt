@@ -1,0 +1,7 @@
+MY READING LIST REPORT
+======================
+Total books: 2
+
+Book titles:
+1. Flask quickstart
+2. Python virtual environments

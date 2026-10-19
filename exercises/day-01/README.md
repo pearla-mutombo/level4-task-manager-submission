@@ -45,3 +45,31 @@ Stop Flask with Control+C and retry in React. Record the visible error. Restart 
 Submit the Python script, extra route, request evidence, and a short explanation of Python lists/dictionaries. Include your first daily PR and any blockers. Do not commit `.venv`, `.env.local`, or `node_modules`.
 
 **Optional after required work:** Use a query parameter to personalize a greeting, after reviewing Tuesday's request-input explanation with your instructor.
+
+---
+
+## My Day 1 Reflection: Challenges, Solutions, and What I Learned
+
+### What I Worked On
+
+For Day 1, I practiced using Python variables, lists, dictionaries, and different data types. I also worked with the Flask backend and added an `/api/about` endpoint that returns information about the application in JSON format.
+
+### Challenges I Experienced
+
+One area I had to spend extra time understanding was how Python lists and dictionaries work together. I wanted to understand how to access a particular task, update its information, and add another task without confusing the list with the dictionaries inside it.
+
+I also needed to understand how Flask routes work, especially the purpose of a route decorator and how Python indentation affects the code.
+
+### How I Worked Through These Challenges
+
+I broke the exercises into smaller steps and reviewed what each line of code was doing. I practiced accessing dictionary values, changing task information, and printing the results to understand how the data changed.
+
+For the Flask endpoint, I reviewed how the route decorator connects a URL to a Python function and how `jsonify()` returns information in JSON format.
+
+### What I Learned
+
+Day 1 helped me become more comfortable reading Python code and understanding how information is organized in lists and dictionaries.
+
+I also learned that the frontend and backend have different responsibilities. React sends requests, and Flask processes those requests and sends responses.
+
+One important lesson for me was to take my time understanding the code rather than just getting it to run.
