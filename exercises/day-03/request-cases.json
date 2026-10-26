@@ -1,14 +1,113 @@
 [
-  {"method":"POST","path":"/api/tasks","body":{"title":"   "},"expected_status":400},
-  {"method":"POST","path":"/api/tasks","body":{"title":12},"expected_status":400},
-  {"method":"POST","path":"/api/tasks","body":{"title":"Learn","id":99},"expected_status":400},
-  {"method":"POST","path":"/api/tasks","body":[],"expected_status":400},
-  {"method":"POST","path":"/api/tasks","content_type":"text/plain","raw_body":"hello","expected_status":415},
-  {"method":"POST","path":"/api/tasks","content_type":"application/json","raw_body":"{","expected_status":400},
-  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{},"expected_status":400},
-  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"title":"Changed","is_complete":"false"},"expected_status":400,"follow_up":"GET the same task and confirm the original title and completion are unchanged."},
-  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"is_complete":0},"expected_status":400},
-  {"method":"PATCH","path":"/api/tasks/TASK_ID","body":{"created_at":"changed"},"expected_status":400},
-  {"method":"GET","path":"/api/tasks/999999","expected_status":404},
-  {"method":"GET","path":"/api/tasks?status=unknown","expected_status":400}
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "body": { "title": "   " },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Title must contain between 1 and 80 characters."
+  },
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "body": { "title": 12 },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Title must be a string."
+  },
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "body": { "title": "Learn", "id": 99 },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Only title is allowed when creating a task."
+  },
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "body": [],
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Request body must be a JSON object."
+  },
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "content_type": "text/plain",
+    "raw_body": "hello",
+    "expected_status": 415,
+    "actual_status": 415,
+    "result": "PASS",
+    "actual_error": "Send the request body as application/json."
+  },
+  {
+    "method": "POST",
+    "path": "/api/tasks",
+    "content_type": "application/json",
+    "raw_body": "{",
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Request body must be valid JSON."
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/tasks/TASK_ID",
+    "body": {},
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Provide title and/or is_complete."
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/tasks/TASK_ID",
+    "body": { "title": "Changed", "is_complete": "false" },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "is_complete must be a boolean.",
+    "follow_up": "GET the same task and confirm the original title and completion are unchanged.",
+    "follow_up_result": "PASS: Task 3 retained its original title and is_complete=false after the rejected PATCH.",
+    "tested_body_note": "Live test used title 'This title should NOT be saved' instead of 'Changed'."
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/tasks/TASK_ID",
+    "body": { "is_complete": 0 },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "is_complete must be a boolean."
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/tasks/TASK_ID",
+    "body": { "created_at": "changed" },
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Only title and is_complete can be updated."
+  },
+  {
+    "method": "GET",
+    "path": "/api/tasks/999999",
+    "expected_status": 404,
+    "actual_status": 404,
+    "result": "PASS",
+    "actual_error": "Task not found."
+  },
+  {
+    "method": "GET",
+    "path": "/api/tasks?status=unknown",
+    "expected_status": 400,
+    "actual_status": 400,
+    "result": "PASS",
+    "actual_error": "Status must be all, active, or completed."
+  }
 ]
