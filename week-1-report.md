@@ -280,20 +280,36 @@ Both test runs passed successfully.
 
 This experience helped me understand how separating code into modules makes an application easier to organize and maintain. It also reinforced the importance of running automated tests after changing existing code.
 
-## 10. Additional Verification Still Required
+## 10. Completed Manual Verification and Remaining Work
 
-Before final submission, I will review the remaining requirements and document the results of any additional checks.
+Flask API Verification — October 26, 2026
+I manually tested the refactored Flask backend and confirmed that:
 
-These include:
-
-- Rechecking the refactored backend through the remaining manual application tests.
-- Verifying the complete create, read, update, delete, and filter workflow in the browser.
-- Confirming DELETE returns HTTP 204 with an empty response body.
-- Checking that task IDs are not reused after deletion during the same server process.
-- Demonstrating what happens when Flask restarts and in-memory task changes reset.
-- Reviewing the final GitHub branches and daily pull requests.
-
-These checks are listed as remaining work rather than completed results.
+- GET /api/tasks returned the task list successfully.
+- PATCH /api/tasks/1 updated an existing task successfully.
+- The active and completed filters returned the expected results.
+- DELETE /api/tasks/1 returned HTTP 204 No Content with an empty response body.
+- Requesting the deleted task returned HTTP 404 Not Found.
+- Creating a new task after deleting Task #1 assigned Task #3, confirming that task IDs were not reused within the same server process.
+  React Browser Verification — October 26–27, 2026
+  I tested the React application in the browser and confirmed that:
+- React connected to Flask and displayed task information and completion progress.
+- I could create, view, edit, complete, and delete tasks.
+- The All, Active, and Completed filters worked correctly.
+- Empty task titles and titles containing only spaces were rejected.
+- A title longer than 80 characters displayed a validation error without creating a task.
+- Correcting the invalid title allowed me to create a new task successfully.
+- Opening a nonexistent task displayed "Task unavailable" and "Task not found" instead of crashing.
+  In-Memory Storage Verification — October 27, 2026
+  I stopped and restarted the Flask backend, then refreshed the React task list. The original sample tasks, Task #1 and Task #2, returned. Tasks #3 and #5, which I had created during manual testing, were no longer present. This confirmed that changes are stored in memory and reset when the Flask process restarts.
+  Remaining Submission Work
+  Before submitting the assignment, I still need to:
+- Review the GitHub branches and daily pull requests.
+- Record my actual freeCodeCamp progress.
+- Review the final submission checklist.
+- Record the final commit SHA.
+- Prepare the submission snapshot and ZIP archive from the same final commit.
+- Submit the required materials to Moodle.
 
 ## 11. freeCodeCamp Progress
 
@@ -341,7 +357,7 @@ My biggest takeaway is that learning programming requires patience, practice, an
 - [x] Verify the atomic PATCH behavior.
 - [x] Run backend pytest twice successfully.
 - [x] Run frontend lint, automated tests, and build.
-- [ ] Complete remaining manual application checks.
+- [x] Complete remaining manual application checks.
 - [x] Separate Flask storage and validation modules and pass backend tests twice.
 - [ ] Update freeCodeCamp progress.
 - [ ] Confirm daily GitHub pull requests.
