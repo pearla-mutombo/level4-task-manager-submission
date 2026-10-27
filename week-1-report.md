@@ -313,22 +313,57 @@ I manually tested the refactored Flask backend and confirmed that:
 
 ## 11. freeCodeCamp Progress
 
-The required freeCodeCamp coursework has a separate November 20, 2026 deadline.
+The required freeCodeCamp coursework has a separate deadline of November 20, 2026.
 
-**Week 1 progress:** To be updated with my actual completed lessons or exercises before submission.
+As of October 27, 2026, I have started both the Python Certification and Relational Databases Certification courses.
+
+**Python Certification — 18 of 579 steps completed**
+
+I have completed the Introduction to Python and Understanding Variables and Data Types theory sections, along with the Build a Report Card Printer workshop.
+
+I have also completed three lessons in the Introduction to Strings section, covering string immutability, string concatenation and interpolation, and string slicing.
+
+I am continuing to work through the remaining Python lessons, workshops, labs, and certification projects.
+
+**Relational Databases Certification — 8 of 64 steps completed**
+
+I have completed all eight theory lessons in the Working with Relational Databases section under SQL and PostgreSQL.
+
+These lessons covered relational databases, PostgreSQL, SQL tables, data types, inserting and viewing data, primary and foreign keys, table relationships, and joins.
+
+My next activities include the database workshops, review, quiz, and remaining certification requirements.
+
+**Overall Progress**
+
+- Python Certification: 18 of 579 steps completed.
+- Relational Databases Certification: 8 of 64 steps completed.
+- Combined progress: 26 steps completed.
+
+Both certifications are still in progress. I will continue working on the remaining requirements before the November 20, 2026 deadline.
+
+This coursework is helping me strengthen my understanding of Python programming and relational databases while continuing my full-stack development training.
 
 ## 12. GitHub and Submission Information
 
 **Submission repository:**  
 https://github.com/pearla-mutombo/level4-task-manager-submission
 
-**Working branch:** `day-05-verify-handoff`
+**Final submission branch:** `main` (GitHub submission repository)
 
-**Daily progress notes:** `notes/day-01.md` through `notes/day-05.md`
+**Local preparation branch:** `submission-final`
+
+**Verified merge commit:** `031abce` — Pull Request #6 successfully merged into `main` on October 27, 2026.
+
+**GitHub pull requests:** All six pull requests have been successfully merged into `main`.
+
+- Day 1: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/1
+- Day 2: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/2
+- Day 3: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/3
+- Day 4: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/4
+- Day 5: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/5
+- Final Week 1 verification and documentation: https://github.com/pearla-mutombo/level4-task-manager-submission/pull/6
 
 **API validation matrix:** `exercises/day-03/request-cases.json`
-
-**Daily pull request links:** To be confirmed during final GitHub review.
 
 **Final commit SHA:** To be recorded after final verification and commits.
 
@@ -359,8 +394,8 @@ My biggest takeaway is that learning programming requires patience, practice, an
 - [x] Run frontend lint, automated tests, and build.
 - [x] Complete remaining manual application checks.
 - [x] Separate Flask storage and validation modules and pass backend tests twice.
-- [ ] Update freeCodeCamp progress.
-- [ ] Confirm daily GitHub pull requests.
+- [x] Update freeCodeCamp progress with 18 Python steps and 8 Relational Databases steps completed as of October 27, 2026.
+- [x] Confirm all five daily GitHub pull requests and final verification pull request #6 were successfully merged into main.
 - [ ] Record final commit SHA.
 - [ ] Prepare matching GitHub snapshot and ZIP archive.
 - [ ] Submit the required materials to Moodle.
