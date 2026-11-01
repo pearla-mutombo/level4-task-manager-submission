@@ -25,3 +25,15 @@ def get_frontend_origin():
 # if the setting isn't provided, Pythin uses http://127.0.0.1:5173 as the default.
 # get_frontend_origin() is a reusable function that we can import into app.py
 # This shows to move a function into another Python file and import it.
+
+
+def get_database_url():
+    """Get the PostgreSQL connection address from our environment."""
+    return os.getenv("DATABASE_URL")
+#retrieves the connection address for my development database, level4_task_manager_dev.
+
+
+def get_test_database_url():
+    """Get the separate database address used for automated tests."""
+    return os.getenv("TEST_DATABASE_URL")
+#retrieves the connection address for my separate testing database, level4_task_manager_test.
