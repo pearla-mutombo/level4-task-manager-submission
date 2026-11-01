@@ -1,32 +1,33 @@
 
 """Flask API for the Task Manager project."""
 
-from datetime import datetime, timezone
-
-from flask import Flask, current_app, jsonify, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_migrate import Migrate
 
-from config import get_frontend_origin
-from storage import create_initial_tasks, find_task
+from config import get_database_url, get_frontend_origin
+from models import db, Task
 from validation import read_json_object, validate_title
 
 
-def create_app():
-    """Create a Flask application with a fresh in-memory task store."""
+def create_app(database_url=None):
+    """Create a Flask application connected to PostgreSQL."""
 
     app = Flask(__name__)
+
+    # Configure the PostgreSQL database connection.
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url or get_database_url()
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Connect SQLAlchemy and Flask-Migrate.
+    db.init_app(app)
+    Migrate(app, db)
 
     # Allow requests from the React development server.
     CORS(
         app,
         resources={r"/api/*": {"origins": get_frontend_origin()}},
     )
-
-    # Give each new Flask application its own task list.
-    app.task_store = create_initial_tasks()
-
-    # Start new task IDs after the two sample tasks.
-    app.next_task_id = 3
 
     # Check whether the Flask backend is running.
     @app.get("/api/health")
@@ -47,6 +48,7 @@ def create_app():
     # READ: Get all tasks or filter by completion status.
     @app.get("/api/tasks")
     def get_tasks():
+        """Retrieve tasks from PostgreSQL."""
         status = request.args.get("status", "all")
 
         if status not in ("all", "active", "completed"):
@@ -54,40 +56,47 @@ def create_app():
                 "error": "Status must be all, active, or completed."
             }), 400
 
-        tasks = current_app.task_store
+        query = db.select(Task)
 
         if status == "active":
-            matching_tasks = [
-                task for task in tasks if not task["is_complete"]
-            ]
+            query = query.where(Task.is_complete.is_(False))
         elif status == "completed":
-            matching_tasks = [
-                task for task in tasks if task["is_complete"]
-            ]
-        else:
-            matching_tasks = list(tasks)
+            query = query.where(Task.is_complete.is_(True))
 
-        # Show the newest tasks first.
-        matching_tasks.sort(
-            key=lambda task: task["id"],
-            reverse=True,
-        )
+        query = query.order_by(Task.id.desc())
 
-        return jsonify(matching_tasks)
+        tasks = db.session.execute(query).scalars().all()
+
+        return jsonify([
+            {
+                "id": task.id,
+                "title": task.title,
+                "is_complete": task.is_complete,
+                "created_at": task.created_at.isoformat(),
+            }
+            for task in tasks
+        ])
 
     # READ: Get one task by its ID.
     @app.get("/api/tasks/<int:task_id>")
     def get_task(task_id):
-        task = find_task(current_app.task_store, task_id)
+        """Retrieve one task from PostgreSQL."""
+        task = db.session.get(Task, task_id)
 
         if task is None:
             return jsonify({"error": "Task not found."}), 404
 
-        return jsonify(task)
+        return jsonify({
+            "id": task.id,
+            "title": task.title,
+            "is_complete": task.is_complete,
+            "created_at": task.created_at.isoformat(),
+        })
 
-    # CREATE: Add a new task.
+    # CREATE: Save a new task in PostgreSQL.
     @app.post("/api/tasks")
     def create_task():
+        """Create a new task and save it in PostgreSQL."""
         data, error, status = read_json_object()
 
         if error is not None:
@@ -104,85 +113,42 @@ def create_app():
         if error is not None:
             return jsonify({"error": error}), 400
 
-        # The backend creates the ID and timestamp.
-        task = {
-            "id": current_app.next_task_id,
-            "title": title,
-            "is_complete": False,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
+        # Create a new SQLAlchemy task object.
+        task = Task(title=title, is_complete=False)
 
-        current_app.task_store.append(task)
-        current_app.next_task_id += 1
+        # Save the task permanently in PostgreSQL.
+        db.session.add(task)
+        db.session.commit()
 
-        return jsonify(task), 201
+        return jsonify({
+            "id": task.id,
+            "title": task.title,
+            "is_complete": task.is_complete,
+            "created_at": task.created_at.isoformat(),
+        }), 201
 
-    # UPDATE: Change a task's title or completion status.
+    # UPDATE: Temporarily unavailable during Day 07.
+    # PostgreSQL-backed editing will be implemented on Day 08.
     @app.patch("/api/tasks/<int:task_id>")
     def edit_task(task_id):
-        task = find_task(current_app.task_store, task_id)
+        return jsonify({
+            "error": "Task editing is temporarily unavailable."
+        }), 405
 
-        if task is None:
-            return jsonify({"error": "Task not found."}), 404
-
-        data, error, status = read_json_object()
-
-        if error is not None:
-            return jsonify({"error": error}), status
-
-        if not data:
-            return jsonify({
-                "error": "Provide title and/or is_complete."
-            }), 400
-
-        # Prevent changes to protected fields.
-        if set(data) - {"title", "is_complete"}:
-            return jsonify({
-                "error": "Only title and is_complete can be updated."
-            }), 400
-
-        # Validate everything before changing the task.
-        # This prevents partially saving an invalid update.
-        changes = {}
-
-        if "title" in data:
-            title, error = validate_title(data["title"])
-
-            if error is not None:
-                return jsonify({"error": error}), 400
-
-            changes["title"] = title
-
-        if "is_complete" in data:
-            if not isinstance(data["is_complete"], bool):
-                return jsonify({
-                    "error": "is_complete must be a boolean."
-                }), 400
-
-            changes["is_complete"] = data["is_complete"]
-
-        # Apply changes only after all validation passes.
-        task.update(changes)
-
-        return jsonify(task)
-
-    # DELETE: Remove one task.
+    # DELETE: Temporarily unavailable during Day 07.
+    # PostgreSQL-backed deletion will be implemented on Day 08.
     @app.delete("/api/tasks/<int:task_id>")
     def remove_task(task_id):
-        task = find_task(current_app.task_store, task_id)
-
-        if task is None:
-            return jsonify({"error": "Task not found."}), 404
-
-        current_app.task_store.remove(task)
-
-        # HTTP 204 means success with no response body.
-        return "", 204
+        return jsonify({
+            "error": "Task deletion is temporarily unavailable."
+        }), 405
 
     # Return a JSON error for an unknown route.
     @app.errorhandler(404)
     def route_not_found(error):
-        return jsonify({"error": "Route not found."}), 404
+        return jsonify({
+            "error": "Route not found."
+        }), 404
 
     # Return a JSON error for an unsupported HTTP method.
     @app.errorhandler(405)
@@ -191,13 +157,13 @@ def create_app():
             "error": "HTTP method not allowed for this route."
         }), 405
 
-    # Day 1 endpoint: Information about the backend.
+    # Information about the backend.
     @app.get("/api/about")
     def about():
         return jsonify({
             "language": "Python",
             "framework": "Flask",
-            "storage": "in-memory",
+            "storage": "PostgreSQL",
         })
 
     # Return the configured Flask application.
