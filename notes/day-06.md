@@ -16,7 +16,7 @@ This exercise helped me better understand how relational databases store and man
 
 - `sql/day-06/01-schema.sql` — Reference SQL script used to create the `sql_categories` and `sql_tasks` tables in my PostgreSQL practice database.
 - `exercises/day-06/practice.sql` — My SQL practice file containing exercises for retrieving, filtering, updating, and working with database records.
-- `notes/day-06/README.md` — Documentation of the exercises I completed, the results I verified, and the concepts I learned.
+- `notes/day-06.md` — Documentation of the exercises I completed, the results I verified, and the concepts I learned.
 
 ### Database and Tools
 
