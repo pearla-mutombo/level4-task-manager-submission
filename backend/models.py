@@ -18,6 +18,11 @@ class Task(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
+    category_id = db.Column(
+    db.Integer,
+    db.ForeignKey("categories.id", ondelete="SET NULL"),
+    nullable=True,
+)
     is_complete = db.Column(
         db.Boolean,
         nullable=False,
@@ -28,3 +33,11 @@ class Task(db.Model):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+
+class Category(db.Model):
+    """Represent one category stored in PostgreSQL."""
+
+    __tablename__ = "categories"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(40), nullable=False, unique=True)
