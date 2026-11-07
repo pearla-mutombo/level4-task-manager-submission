@@ -1,11 +1,12 @@
 
 """Flask API for the Task Manager project."""
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from flask_migrate import Migrate
 
 from config import get_database_url, get_frontend_origin
+from auth import get_access_token, verify_access_token
 from models import db, Task, Category
 from validation import read_json_object, validate_title
 
@@ -27,6 +28,46 @@ def create_app(database_url=None):
         app,
         resources={r"/api/*": {"origins": get_frontend_origin()}},
     )
+
+    # Business endpoints require a verified Supabase user.
+    PROTECTED_ENDPOINTS = {
+        "get_tasks",
+        "get_task",
+        "get_categories",
+        "create_category",
+        "update_category",
+        "delete_category",
+        "create_task",
+        "edit_task",
+        "remove_task",
+    }
+
+    @app.before_request
+    def require_authentication():
+        """Verify the user before accessing protected endpoints."""
+
+        # Allow browser CORS preflight requests without authentication.
+        if request.method == "OPTIONS":
+            return None
+
+        if request.endpoint not in PROTECTED_ENDPOINTS:
+            return None
+
+        token = get_access_token()
+
+        if not token:
+            return jsonify({"error": "Authentication required"}), 401
+
+        try:
+            user = verify_access_token(token)
+        except ConnectionError:
+            return jsonify({"error": "Authentication service unavailable"}), 503
+
+        if user is None:
+            return jsonify({"error": "Invalid or expired token"}), 401
+
+        g.current_user_id = user.id
+        return None
 
     # Check whether the Flask backend is running.
     @app.get("/api/health")
@@ -57,7 +98,11 @@ def create_app(database_url=None):
                 "error": "Status must be all, active, or completed."
             }), 400
 
-        query = db.select(Task)
+        query = db.select(Task).where(Task.user_id == g.current_user_id)
+        # Task.user_id identifies the task's owner.
+        # g.current_user_id contains the user ID obtained from the verified Supabase
+        # access token.
+        # .where(...) limits the result to tasks belonging to that authenticated user.
 
         # Filter tasks by completion status.
         if status == "active":
@@ -99,7 +144,15 @@ def create_app(database_url=None):
     @app.get("/api/tasks/<int:task_id>")
     def get_task(task_id):
         """Retrieve one task from PostgreSQL."""
-        task = db.session.get(Task, task_id)
+        task = db.session.execute(
+            db.select(Task).where(
+                Task.id == task_id,
+                Task.user_id == g.current_user_id,
+            )
+        ).scalar_one_or_none()
+# Task.id == task_id finds the requested task.
+# Task.user_id == g.current_user_id checks that the authenticated user owns it.
+# .scalar_one_or_none() returns the matching tasks or None.
 
         if task is None:
             return jsonify({"error": "Task not found."}), 404
@@ -116,7 +169,15 @@ def create_app(database_url=None):
     @app.get("/api/categories")
     def get_categories():
         """Return all categories from PostgreSQL."""
-        query = db.select(Category).order_by(Category.name.asc())
+        query = (
+            db.select(Category)
+            .where(Category.user_id == g.current_user_id)
+            .order_by(Category.name.asc())
+        )
+# Caterofy.user_id identifies the category's owner
+# g.current_user_id contains the authenticated user's verified Supabase ID.
+# .where(...) limits the results to the categories belonging to that user.
+# .order_by(...) keeps the categories sorted alphabetically.
         categories = db.session.execute(query).scalars().all()
 
         return jsonify([
@@ -152,13 +213,19 @@ def create_app(database_url=None):
             }), 400
 
         existing = db.session.execute(
-            db.select(Category).where(Category.name == name)
+            db.select(Category).where(
+                Category.name == name,
+                Category.user_id == g.current_user_id,
+            )
         ).scalar_one_or_none()
 
         if existing is not None:
             return jsonify({"error": "Category already exists."}), 409
 
-        category = Category(name=name)
+        category = Category(
+            name=name,
+            user_id=g.current_user_id,
+        )
         db.session.add(category)
         db.session.commit()
 
@@ -171,7 +238,12 @@ def create_app(database_url=None):
     @app.patch("/api/categories/<int:category_id>")
     def update_category(category_id):
         """Update a category name in PostgreSQL."""
-        category = db.session.get(Category, category_id)
+        category = db.session.execute(
+            db.select(Category).where(
+                Category.id == category_id,
+                Category.user_id == g.current_user_id,
+            )
+        ).scalar_one_or_none()
 
         if category is None:
             return jsonify({"error": "Category not found."}), 404
@@ -199,6 +271,7 @@ def create_app(database_url=None):
         existing = db.session.execute(
             db.select(Category).where(
                 Category.name == name,
+                Category.user_id == g.current_user_id,
                 Category.id != category_id,
             )
         ).scalar_one_or_none()
@@ -218,7 +291,17 @@ def create_app(database_url=None):
     @app.delete("/api/categories/<int:category_id>")
     def delete_category(category_id):
         """Delete a category from PostgreSQL."""
-        category = db.session.get(Category, category_id)
+        category = db.session.execute(
+            db.select(Category).where(
+                Category.id == category_id,
+                Category.user_id == g.current_user_id,
+            )
+        ).scalar_one_or_none()
+        # Category.id == category.id identifies the requested category.
+        # Category.user_id == g.current_user_id checks that the category belongs
+        # to the authenticated user.
+        # .scalar_one_or_none() return the category only when both conditions
+        # match.
 
         if category is None:
             return jsonify({"error": "Category not found."}), 404
@@ -255,7 +338,16 @@ def create_app(database_url=None):
                     "error": "category_id must be an integer or null."
                 }), 400
 
-            category = db.session.get(Category, category_id)
+            category = db.session.execute(
+                db.select(Category).where(
+                    Category.id == category_id,
+                    Category.user_id == g.current_user_id,
+                )
+            ).scalar_one_or_none()
+            # Category.id == category_id checks the requested category.
+            # Category.user_id == g.current_user_id verifies that the category belonhs
+            # to the authenticated user.
+            # .scalar_one_or_none() returns the catefory only when both conditions match.
 
             if category is None:
                 return jsonify({
@@ -266,6 +358,7 @@ def create_app(database_url=None):
             title=title,
             category_id=category_id,
             is_complete=False,
+            user_id=g.current_user_id,
         )
 
         db.session.add(task)
@@ -283,7 +376,16 @@ def create_app(database_url=None):
     @app.patch("/api/tasks/<int:task_id>")
     def edit_task(task_id):
         """Update a task's title, completion status, or category."""
-        task = db.session.get(Task, task_id)
+        task = db.session.execute(
+            db.select(Task).where(
+                Task.id == task_id,
+                Task.user_id == g.current_user_id,
+            )
+        ).scalar_one_or_none()
+        # Task.id == task_id identifies the task being edited.
+        # Task.user_id == g.current_user_id ensures the task belongs to the
+        # authenticated Supabase user.
+        # .scalar_one_or_noe() returns the task only when both conditions match.
 
         if task is None:
             return jsonify({"error": "Task not found."}), 404
@@ -324,7 +426,16 @@ def create_app(database_url=None):
                         "error": "category_id must be an integer or null."
                     }), 400
 
-                category = db.session.get(Category, category_id)
+                category = db.session.execute(
+                    db.select(Category).where(
+                        Category.id == category_id,
+                        Category.user_id == g.current_user_id,
+                    )
+                ).scalar_one_or_none()
+                # Category.id == category_id identifies the requested category.
+                # Category.user_id == g.current_user_id verifies that the category belongs
+                # to the authenticated user.
+                # .scalar_one_or_none() returns the category only when both conditions match.
 
                 if category is None:
                     return jsonify({
@@ -355,7 +466,16 @@ def create_app(database_url=None):
     @app.delete("/api/tasks/<int:task_id>")
     def remove_task(task_id):
         """Delete a task permanently from PostgreSQL."""
-        task = db.session.get(Task, task_id)
+        task = db.session.execute(
+            db.select(Task).where(
+                Task.id == task_id,
+                Task.user_id == g.current_user_id,
+            )
+        ).scalar_one_or_none()
+        # Task.id == task_id identifies the task being deleted.
+        # Task.user_id == g.current_user_id verifies that the authenticated user
+        # owns the task.
+        # .scalar_one_or_none() returns the task only when both conditions match.
 
         if task is None:
             return jsonify({"error": "Task not found."}), 404

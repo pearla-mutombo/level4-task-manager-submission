@@ -10,3 +10,6 @@ __pycache__/
 .env.local
 .env.*.local
 exercises/day-04/output/
+
+# Local database backups
+backend/pre_ownership_backup_*.json
