@@ -37,3 +37,11 @@ def get_test_database_url():
     """Get the separate database address used for automated tests."""
     return os.getenv("TEST_DATABASE_URL")
 #retrieves the connection address for my separate testing database, level4_task_manager_test.
+
+def get_supabase_url():
+    """Get the Supabase project URL from the environment."""
+    return os.getenv("SUPABASE_URL")
+
+def get_supabase_key():
+    """Get the Supabase publishable key from the environment."""
+    return os.getenv("SUPABASE_KEY")

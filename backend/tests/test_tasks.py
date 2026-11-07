@@ -3,6 +3,8 @@
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
+from uuid import UUID
 
 import pytest
 
@@ -11,41 +13,52 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_DIR))
 
 import app as task_app
+TEST_USER_ID = UUID("11111111-1111-4111-8111-111111111111")
+SECOND_USER_ID = UUID("22222222-2222-4222-8222-222222222222")
+
 
 @pytest.fixture
-def client():
-    """Use the separate PostgreSQL testing database."""
-
+def client(monkeypatch):
+    """Use only the isolated PostgreSQL test database and mock Supabase."""
     from config import get_test_database_url
     from models import db, Task, Category
 
-    # Never run tests against the development database.
     test_database_url = get_test_database_url()
-
-    assert test_database_url is not None, (
-        "TEST_DATABASE_URL must be configured."
-    )
-
+    assert test_database_url, "TEST_DATABASE_URL must be configured."
     assert test_database_url != task_app.get_database_url(), (
-        "The testing and development databases must be different."
+        "Testing and development databases must be different."
     )
 
-    flask_app = task_app.create_app(
-        database_url=test_database_url
-    )
+    flask_app = task_app.create_app(database_url=test_database_url)
     flask_app.config["TESTING"] = True
+    monkeypatch.setattr(
+        task_app,
+        "verify_access_token",
+        lambda token: SimpleNamespace(id=TEST_USER_ID),
+    )
 
     with flask_app.app_context():
-        # Clear only the testing database before each test.
+        # These deletes are intentionally limited to the dedicated test database.
         db.session.execute(db.delete(Task))
         db.session.execute(db.delete(Category))
         db.session.commit()
 
     with flask_app.test_client() as test_client:
+        test_client.environ_base["HTTP_AUTHORIZATION"] = "Bearer test-token"
         yield test_client
 
     with flask_app.app_context():
         db.session.remove()
+
+
+def act_as(monkeypatch, user_id):
+    """Simulate a verified Supabase identity for a single test."""
+    monkeypatch.setattr(
+        task_app,
+        "verify_access_token",
+        lambda token: SimpleNamespace(id=user_id),
+    )
+
 
 
 def test_create_task(client):
@@ -442,9 +455,159 @@ def test_filter_tasks_by_category_and_status(client):
     assert tasks[0]["category_id"] == school_id
     assert tasks[0]["is_complete"] is False
 
-# Test                                  Expected result
-# Creat a valid task                    HTTP 201
-# Reject a blank title                  HTPP 400
-# Request a missing task                HTTP 404
-# Reject "false" as completion          HTTP 400
-# Reject invalid mixef-filed PATCH      HTTP 400; original task unchanged
+# Authentication and account ownership tests
+
+def test_missing_bearer_token_returns_401(client):
+    response = client.get("/api/tasks", headers={"Authorization": ""})
+    assert response.status_code == 401
+
+
+def test_invalid_bearer_token_returns_401(client, monkeypatch):
+    monkeypatch.setattr(task_app, "verify_access_token", lambda token: None)
+    response = client.get("/api/tasks")
+    assert response.status_code == 401
+
+
+def test_auth_service_unavailable_returns_503(client, monkeypatch):
+    def unavailable(token):
+        raise ConnectionError("Simulated Supabase outage")
+
+    monkeypatch.setattr(task_app, "verify_access_token", unavailable)
+    response = client.get("/api/tasks")
+    assert response.status_code == 503
+
+
+def test_health_remains_public(client):
+    response = client.get("/api/health", headers={"Authorization": ""})
+    assert response.status_code == 200
+
+
+def test_users_cannot_access_each_others_tasks(client, monkeypatch):
+    created = client.post("/api/tasks", json={"title": "User A private task"})
+    assert created.status_code == 201
+    task_id = created.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    assert client.get(f"/api/tasks/{task_id}").status_code == 404
+    assert client.get("/api/tasks").get_json() == []
+
+    act_as(monkeypatch, TEST_USER_ID)
+    assert client.get(f"/api/tasks/{task_id}").status_code == 200
+
+
+def test_users_cannot_update_each_others_tasks(client, monkeypatch):
+    created = client.post("/api/tasks", json={"title": "User A original task"})
+    assert created.status_code == 201
+    task_id = created.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    response = client.patch(
+        f"/api/tasks/{task_id}", json={"title": "Changed by User B"}
+    )
+    assert response.status_code == 404
+
+    act_as(monkeypatch, TEST_USER_ID)
+    original = client.get(f"/api/tasks/{task_id}")
+    assert original.status_code == 200
+    assert original.get_json()["title"] == "User A original task"
+
+
+def test_users_cannot_delete_each_others_tasks(client, monkeypatch):
+    created = client.post("/api/tasks", json={"title": "Keep User A task"})
+    assert created.status_code == 201
+    task_id = created.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    assert client.delete(f"/api/tasks/{task_id}").status_code == 404
+
+    act_as(monkeypatch, TEST_USER_ID)
+    assert client.get(f"/api/tasks/{task_id}").status_code == 200
+
+
+def test_users_cannot_access_each_others_categories(client, monkeypatch):
+    created = client.post("/api/categories", json={"name": "Private category"})
+    assert created.status_code == 201
+    category_id = created.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    categories = client.get("/api/categories")
+    assert categories.status_code == 200
+    assert categories.get_json() == []
+    assert client.patch(
+        f"/api/categories/{category_id}", json={"name": "Stolen"}
+    ).status_code == 404
+    assert client.delete(f"/api/categories/{category_id}").status_code == 404
+
+    act_as(monkeypatch, TEST_USER_ID)
+    categories = client.get("/api/categories").get_json()
+    assert any(item["id"] == category_id and item["name"] == "Private category"
+               for item in categories)
+
+
+def test_users_cannot_assign_others_categories(client, monkeypatch):
+    created = client.post("/api/categories", json={"name": "User A category"})
+    assert created.status_code == 201
+    category_id = created.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    response = client.post(
+        "/api/tasks", json={"title": "Invalid association", "category_id": category_id}
+    )
+    assert response.status_code in (400, 404)
+    assert client.get("/api/tasks").get_json() == []
+
+
+def test_users_cannot_reassign_tasks_to_others_categories(client, monkeypatch):
+    category = client.post("/api/categories", json={"name": "User A category"})
+    assert category.status_code == 201
+    category_id = category.get_json()["id"]
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    task = client.post("/api/tasks", json={"title": "User B task"})
+    assert task.status_code == 201
+    task_id = task.get_json()["id"]
+    response = client.patch(
+        f"/api/tasks/{task_id}", json={"category_id": category_id}
+    )
+    assert response.status_code in (400, 404)
+    assert client.get(f"/api/tasks/{task_id}").get_json()["category_id"] is None
+
+
+def test_same_category_name_allowed_for_different_users(client, monkeypatch):
+    first = client.post("/api/categories", json={"name": "Work"})
+    assert first.status_code == 201
+
+    act_as(monkeypatch, SECOND_USER_ID)
+    second = client.post("/api/categories", json={"name": "Work"})
+    assert second.status_code == 201
+    assert second.get_json()["id"] != first.get_json()["id"]
+
+
+def test_reject_client_supplied_task_owner(client):
+    response = client.post(
+        "/api/tasks",
+        json={"title": "Forged owner", "user_id": str(SECOND_USER_ID)},
+    )
+    assert response.status_code == 400
+
+
+def test_reject_client_supplied_category_owner(client):
+    response = client.post(
+        "/api/categories",
+        json={"name": "Forged owner", "user_id": str(SECOND_USER_ID)},
+    )
+    assert response.status_code == 400
+
+
+def test_invalid_mixed_patch_does_not_change_task(client):
+    created = client.post("/api/tasks", json={"title": "Original"})
+    assert created.status_code == 201
+    task_id = created.get_json()["id"]
+    response = client.patch(
+        f"/api/tasks/{task_id}",
+        json={"title": "Changed", "is_complete": "false"},
+    )
+    assert response.status_code == 400
+    saved = client.get(f"/api/tasks/{task_id}").get_json()
+    assert saved["title"] == "Original"
+    assert saved["is_complete"] is False
