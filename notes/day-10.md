@@ -180,7 +180,7 @@ I learned that Render's free hosting tier has resource limitations and may put a
 
 This means the first request after a period of inactivity may take longer than usual.
 
-A separate sleep-and-wake verification and persistence check after a redeployment remain useful final checks.
+The database persistence check after the Render redeployment was completed successfully. The remaining deployment check is to observe Render's free-tier sleep-and-wake behavior after a period of inactivity.
 
 ## Reflection
 
@@ -196,8 +196,52 @@ Completing 25 backend tests, 18 frontend tests, all frontend lint checks, and a 
 
 Overall, Day 10 helped me better understand the responsibilities involved in deploying, testing, and maintaining a full-stack React, Flask, and PostgreSQL application.
 
+## Final Render Redeployment and Database Persistence Verification
+
+After merging Day 10 Pull Request #12 into the `main` branch, I updated my Render web service to deploy from `main` instead of `day-10-render-deployment`.
+
+Render automatically deployed merge commit `cb0b6d1`. I reviewed the deployment logs and confirmed that the build completed successfully, Gunicorn started, the application became live, and the `/api/health` endpoint returned HTTP 200.
+
+### Database Persistence Test
+
+Before changing the deployment branch, I created a task named **Day 10 - Render Persistence Test** while signed in with my primary account.
+
+The application assigned the task ID `3`.
+
+After Render successfully redeployed the backend from `main`, I returned to my React application and refreshed Safari.
+
+The test task was still present in my task list.
+
+This confirmed that my task data remained available after the backend redeployment and that my application could continue retrieving it from the hosted Supabase PostgreSQL database.
+
+### Test Cleanup
+
+After verifying persistence, I deleted the temporary test task.
+
+The application displayed **No tasks yet**, confirming that the task was removed from the task list.
+
+### Final Verification Status
+
+- Render deployment branch updated to `main`.
+- Merge commit `cb0b6d1` deployed successfully.
+- Gunicorn started successfully.
+- Backend health endpoint returned HTTP 200.
+- Task ID `3` survived the backend redeployment.
+- Temporary persistence-test task was deleted.
+- Render Free sleep-and-wake behavior remains to be verified.
+
+### What I Learned
+
+This final test helped me understand why application deployment and database storage are separate responsibilities.
+
+I learned that redeploying my Flask backend does not necessarily affect records stored in my hosted PostgreSQL database.
+
+I also gained experience maintaining a deployment from the `main` branch and verifying that my application continues working after a new deployment.
+
 ## Next Steps
 
-Before final submission, I will finish any remaining deployment checks, including verifying persistence after a Render redeployment and checking free-tier sleep-and-wake behavior.
+I successfully completed the Render redeployment persistence test. After deploying the Flask backend from the `main` branch, I refreshed my React application and confirmed that my previously created task was still available. I also deleted the temporary test task after completing the verification.
 
-I will then finalize my documentation, commit my Day 10 changes, and prepare my Week 2 submission.
+The remaining deployment check is to observe Render's free-tier sleep-and-wake behavior after a period of inactivity.
+
+I will finalize my Day 10 documentation, commit the final verification updates, and prepare my Week 2 assignment for submission.
