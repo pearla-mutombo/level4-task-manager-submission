@@ -19,10 +19,18 @@ def create_app(database_url=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url or get_database_url()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    # Keep database connections small and reliable for Render Free.
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_size": 2,
+        "max_overflow": 0,
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
+
     # Connect SQLAlchemy and Flask-Migrate.
     db.init_app(app)
     Migrate(app, db)
-
+    
     # Allow requests from the React development server.
     CORS(
         app,
